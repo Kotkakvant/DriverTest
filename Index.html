@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kvantovaya — Тест на определение ведущего драйвера</title>
+  <style>
+    /* Сброс и базовые стили */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+      background: #f5f7fa;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+      padding: 1rem;
+    }
+
+    header {
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+      user-select: none;
+    }
+
+    main {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      max-width: 600px;
+      width: 100%;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      min-height: 400px;
+    }
+
+    .question-number {
+      font-weight: 600;
+      color: #34495e;
+      margin-bottom: 0.5rem;
+      user-select: none;
+    }
+
+    .question-text {
+      font-size: 1.2rem;
+      margin-bottom: 1.2rem;
+      line-height: 1.4;
+      user-select: none;
+    }
+
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    label {
+      background: #ecf0f1;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    label:hover {
+      background: #d0d7de;
+    }
+
+    input[type="radio"] {
+      accent-color: #2980b9;
+      cursor: pointer;
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+    }
+
+    button {
+      align-self: flex-end;
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      background-color: #2980b9;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+
+    button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #1c5980;
+    }
+
+    .result {
+      font-size: 1.1rem;
+      line-height: 1.5;
+      color: #2c3e50;
+      user-select: text;
+    }
+
+    .result-title {
+      font-weight: 700;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: #34495e;
+      user-select: none;
+    }
+
+    /* Адаптивность */
+    @media (max-width: 480px) {
+      main {
+        padding: 1rem 1.2rem;
+      }
+      header h1 {
+        font-size: 2rem;
+      }
+      .question-text {
+        font-size: 1rem;
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Kvantovaya</h1>
+  </header>
+  <main id="app">
+    <!-- Контент теста будет динамически вставляться сюда -->
+  </main>
+
+  <script>
+    /*
+      Тест на определение ведущего драйвера (Driver Questionnaire)
+      Использует модель драйверов по Джули Хэй (1992)
+      Варианты ответов: Да / В некоторой степени / Нет
+      Каждый ответ начисляет баллы по соответствующим драйверам.
+      После прохождения выводится результат с подсчетом баллов.
+    */
+
+    // Список драйверов (рабочих стилей)
+    const drivers = [
+      { id: "be_perfect", name: "Будь совершенным" },
+      { id: "be_strong", name: "Будь сильным" },
+      { id: "try_hard", name: "Старайся изо всех сил" },
+      { id: "please", name: "Угождай" },
+      { id: "hurry_up", name: "Поторопись" }
+    ];
+
+    // Вопросы теста
+    // Каждый вопрос связан с одним или несколькими драйверами и имеет вес для каждого драйвера
+    // Вес — количество баллов, которые начисляются за ответ "Да" (2 балла), "В некоторой степени" (1 балл), "Нет" (0 баллов)
+    // Структура: { text: "Вопрос", scores: { driver_id: weight, ... } }
+    const questions = [
+      {
+        text: "Я стремлюсь делать всё идеально и без ошибок.",
+        scores: { be_perfect: 1 }
+      },
+      {
+        text: "Мне важно выглядеть сильным и независимым в любой ситуации.",
+        scores: { be_strong: 1 }
+      },
+      {
+        text: "Я всегда стараюсь приложить максимум усилий, даже если задача сложная.",
+        scores: { try_hard: 1 }
+      },
+      {
+        text: "Мне важно угодить другим и получить их одобрение.",
+        scores: { please: 1 }
+      },
+      {
+        text: "Я часто тороплюсь, чтобы быстрее завершить дела.",
+        scores: { hurry_up: 1 }
+      },
+      {
+        text: "Я не могу расслабиться, пока не доведу дело до идеала.",
+        scores: { be_perfect: 1 }
+      },
+      {
+        text: "Я предпочитаю не показывать свои слабости окружающим.",
+        scores: { be_strong: 1 }
+      },
+      {
+        text: "Даже если устал, я продолжаю стараться изо всех сил.",
+        scores: { try_hard: 1 }
+      },
+      {
+        text: "Мне сложно отказать, если кто-то просит о помощи.",
+        scores: { please: 1 }
+      },
+      {
+        text: "Я часто спешу и делаю несколько дел одновременно.",
+        scores: { hurry_up: 1 }
+      },
+      {
+        text: "Я чувствую давление быть безупречным в работе и жизни.",
+        scores: { be_perfect: 1 }
+      },
+      {
+        text: "Я стараюсь выглядеть уверенным и контролирующим ситуацию.",
+        scores: { be_strong: 1 }
+      },
+      {
+        text: "Я не сдаюсь, пока не достигну поставленной цели.",
+        scores: { try_hard: 1 }
+      },
+      {
+        text: "Мне важно, чтобы меня любили и принимали окружающие.",
+        scores: { please: 1 }
+      },
+      {
+        text: "Я часто тороплюсь, чтобы успеть всё сделать вовремя.",
+        scores: { hurry_up: 1 }
+      }
+    ];
+
+    // Варианты ответов с соответствующими баллами
+    const answers = [
+      { text: "Да", value: 2 },
+      { text: "В некоторой степени", value: 1 },
+      { text: "Нет", value: 0 }
+    ];
+
+    // Состояние приложения
+    let currentQuestionIndex = 0;
+    // Для хранения ответов пользователя: массив чисел (0,1,2) по индексу вопроса
+    const userAnswers = new Array(questions.length).fill(null);
+
+    // Ссылка на контейнер для рендеринга
+    const app = document.getElementById("app");
+
+    // Функция рендеринга текущего вопроса
+    function renderQuestion() {
+      const q = questions[currentQuestionIndex];
+
+      // Создаем заголовок с номером вопроса
+      const questionNumber = document.createElement("div");
+      questionNumber.className = "question-number";
+      questionNumber.textContent = `Вопрос ${currentQuestionIndex + 1} из ${questions.length}`;
+
+      // Текст вопроса
+      const questionText = document.createElement("div");
+      questionText.className = "question-text";
+      questionText.textContent = q.text;
+
+      // Контейнер для ответов
+      const answersContainer = document.createElement("div");
+      answersContainer.className = "answers";
+
+      // Создаем радио-кнопки для ответов
+      answers.forEach((answer, i) => {
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "answer";
+        input.value = answer.value;
+        input.id = `answer-${i}`;
+        // Если пользователь уже выбирал ответ, отметим его
+        if (userAnswers[currentQuestionIndex] === answer.value) {
+          input.checked = true;
+        }
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(answer.text));
+        answersContainer.appendChild(label);
+      });
+
+      // Кнопка "Далее" или "Завершить"
+      const btn = document.createElement("button");
+      btn.textContent = currentQuestionIndex === questions.length - 1 ? "Завершить" : "Далее";
+      btn.disabled = userAnswers[currentQuestionIndex] === null;
+
+      // Обработчик изменения выбора ответа
+      answersContainer.addEventListener("change", (e) => {
+        const val = parseInt(e.target.value, 10);
+        userAnswers[currentQuestionIndex] = val;
+        btn.disabled = false;
+      });
+
+      // Обработчик кнопки
+      btn.addEventListener("click", () => {
+        if (userAnswers[currentQuestionIndex] === null) return; // Без ответа нельзя идти дальше
+
+        if (currentQuestionIndex < questions.length - 1) {
+          currentQuestionIndex++;
+          renderApp();
+        } else {
+          // Конец теста — считаем и показываем результат
+          renderResult();
+        }
+      });
+
+      // Очищаем контейнер и вставляем новые элементы
+      app.innerHTML = "";
+      app.appendChild(questionNumber);
+      app.appendChild(questionText);
+      app.appendChild(answersContainer);
+      app.appendChild(btn);
+    }
+
+    // Функция подсчета результатов и рендеринга результата
+    function renderResult() {
+      // Подсчет баллов по драйверам
+      const scores = {};
+      drivers.forEach(d => scores[d.id] = 0);
+
+      // Проходим по всем ответам и суммируем баллы
+      questions.forEach((q, idx) => {
+        const answerValue = userAnswers[idx]; // 0,1,2
+        // Для каждого драйвера у вопроса добавляем баллы * вес
+        for (const [driverId, weight] of Object.entries(q.scores)) {
+          scores[driverId] += answerValue * weight;
+        }
+      });
+
+      // Определяем максимальный балл
+      const maxScore = Math.max(...Object.values(scores));
+
+      // Находим драйверы с максимальным баллом (может быть несколько)
+      const leadingDrivers = drivers.filter(d => scores[d.id] === maxScore);
+
+      // Формируем текст результата
+      let resultHTML = `<div class="result-title">Ваш ведущий рабочий стиль (драйвер):</div>`;
+
+      if (maxScore === 0) {
+        resultHTML += `<div class="result">По вашим ответам не выявлен выраженный ведущий драйвер.</div>`;
+      } else {
+        leadingDrivers.forEach(d => {
+          resultHTML += `<div class="result"><strong>${d.name}</strong></div>`;
+        });
+      }
+
+      // Дополнительно показываем баллы по всем драйверам
+      resultHTML += `<hr style="margin:1rem 0; border:none; border-top:1px solid #ccc;" />`;
+      resultHTML += `<div class="result-title">Баллы по всем драйверам:</div>`;
+      resultHTML += `<ul style="padding-left: 1.2rem; margin:0;">`;
+      drivers.forEach(d => {
+        resultHTML += `<li>${d.name}: <strong>${scores[d.id]}</strong></li>`;
+      });
+      resultHTML += `</ul>`;
+
+      // Кнопка для повторного прохождения теста
+      resultHTML += `<button id="restart-btn" style="margin-top:1.5rem;">Пройти тест заново</button>`;
+
+      app.innerHTML = resultHTML;
+
+      document.getElementById("restart-btn").addEventListener("click", () => {
+        currentQuestionIndex = 0;
+        userAnswers.fill(null);
+        renderApp();
+      });
+    }
+
+    // Главная функция рендеринга приложения
+    function renderApp() {
+      if (currentQuestionIndex < questions.length) {
+        renderQuestion();
+      } else {
+        renderResult();
+      }
+    }
+
+    // Запускаем тест при загрузке страницы
+    renderApp();
+  </script>
+</body>
+</html>
